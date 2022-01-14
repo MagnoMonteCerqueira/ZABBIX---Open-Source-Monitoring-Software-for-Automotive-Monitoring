@@ -32,7 +32,7 @@ Since all information is stored in ECU (Electronic Control Unit), there is also 
 And exactly OBD-II will help us to gather all information from the vehicle, to further transfer it to our Zabbix monitoring system. Initially, this may yet sound very unclear, because we have some kind of socket to access our ECU, but how can we actually gather some meaningful data? For that, we will need ELM327
 
 
-![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641929639393.jpg)
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641935110348.jpg)
 
 ELM327 is a programmed microcontroller produced by ELM Electronics for translating the OBD interface. Even today ELM327 command protocol is one of the most popular PC to OBD interface standards. Typically ELM abstracts the low-level protocol and presents a simple interface that can be called via UART, typically by a hand-held diagnostic tool or a computer program connected by USB, RS-232, Bluetooth, or WiFi. In our case, we don't need and we don't have any dedicated diagnostic tool, so we will have to use something else to work with OBD-II and translate all incoming data. With ELM-327 it is very simple, you can purchase an ELM327 OBD2-Bluetooth adapter on Amazon for a couple of dollars and it will be enough to provide the required functionality.
 
