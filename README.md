@@ -77,7 +77,7 @@ It is up to you how to react to these triggers. It could be just a flashing ligh
 No secret that there are flaws and downsides. As I mentioned right in beginning, there are software and devices that are developed and adopted exactly for this purpose, however, my approach may not be 100% reliable. Data transfer from ECU is not as live as reading CPU utilization from your computer. All of this is just a reminder, that monitoring is not limited to network devices and servers. And Zabbix, which is growing every year, provides more and more features to its users while remaining absolutely free and open-source, is here to support all your ideas and help them come to life.
 
 
-***Reference:
+*** Reference:
 
 
 
