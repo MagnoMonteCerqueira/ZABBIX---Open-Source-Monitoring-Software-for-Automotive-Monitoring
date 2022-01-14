@@ -32,6 +32,60 @@ Since all information is stored in ECU (Electronic Control Unit), there is also 
 And exactly OBD-II will help us to gather all information from the vehicle, to further transfer it to our Zabbix monitoring system. Initially, this may yet sound very unclear, because we have some kind of socket to access our ECU, but how can we actually gather some meaningful data? For that, we will need ELM327
 
 
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641929639393.jpg)
+
+ELM327 is a programmed microcontroller produced by ELM Electronics for translating the OBD interface. Even today ELM327 command protocol is one of the most popular PC to OBD interface standards. Typically ELM abstracts the low-level protocol and presents a simple interface that can be called via UART, typically by a hand-held diagnostic tool or a computer program connected by USB, RS-232, Bluetooth, or WiFi. In our case, we don't need and we don't have any dedicated diagnostic tool, so we will have to use something else to work with OBD-II and translate all incoming data. With ELM-327 it is very simple, you can purchase an ELM327 OBD2-Bluetooth adapter on Amazon for a couple of dollars and it will be enough to provide the required functionality.
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641935487519.jpg)
+
+
+As it usually happens, for all things that we need, we can find a Python library published under GPLv2. And as you already noticed from the screenshot, we are not limited to stored DTC values. In addition to that, we are able to read live data from our vehicle, such as speed, fuel pressure, coolant temperature, intake temperature, and much more.
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641934663189.jpg)
+
+The closer we are getting to the result, the simpler it starts to look. At this point, we basically have everything that we need. We have data, we have an interface from which to read it. ELM327 allows us to transport this data to our device, and the python library allows us to translate and process this information, therefore allowing sending clean data to our Zabbix. The only open question is what device should we use in our vehicle, on which we could run our Python script, and which would have GSM access to transfer gathered data to the Zabbix server. In my example choice was as simple as cheap - Raspberry Pi.
+
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641936196675.jpg)
+
+And then it's a matter of choice when you have Raspberry set up on a vehicle, connected via Bluetooth or any other way to your ELM327, that is plugged into an OBD-II connector. With Python script running on Pi device to receive and process data from our ECM, we need to decide what piece of software from Zabbix we want on this device. Considering, that the car could be driving through different areas where internet coverage could not be the best, but we also don't want to lose any data simply because there was no connection, I think it is best to install Zabbix proxy on Raspberry Pi.
+Zabbix proxy perfectly suits such a small setup and helps us with its main purpose. Proxy has a local database, that stores all information that has to be sent to our Zabbix server. If because of some networking trouble this data can't be passed to our server, it will be kept in the local database for a moment when a network connection is restored and data is sent. Luckily for us, Zabbix has Official Packages for Raspberry Pi OS, so we don't need to tailor any magic around it.
+The functionality of the Zabbix proxy allows us to choose between two modes ( Active and Passive ), which basically allows us to choose the direction of communication. It might not be the cheapest approach to purchase a static IP address for each unit, therefore we will be using Zabbix Proxy (Active), which simply will connect to our Zabbix server and send all gathered information. Of course, there are security measures for validation to make sure, that only designated devices will be able to send data to a server and if an even more secure approach is required, users may choose to use TLS encryption with PSK or Certificates.
+
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641936861810.jpg)
+
+
+Previously I mentioned, that with the new Geomap widget, it is possible to achieve a live view of the current location from all your fleet on a single dashboard. To do that, we obviously need live latitude and longitude readings, which ECU and stock Raspberry Pi is not able to provide. But this is the beauty of Raspberry, with minimal investments, we can purchase a GPS unit and combine it together with our Pi.
+
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641937127377.jpg)
+
+
+With a very simplified Python script, we can gather all required data, and move it to our Zabbix proxy that is installed on localhost, which then will parse this information to our Zabbix Server that will allow us to see it in the dashboard. As this is not a very native and straightforward approach to monitoring, we won't be able to use native item types to collect this data. This means that all the collection must be done within the script, and then we need to pass this data using the Zabbix-sender utility. The purpose of this utility is very simple, without any complications, take data that is provided and send it to a specified Hostname.
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641937429292.jpg)
+
+
+Since Zabbix has a very powerful preprocessing engine, we don't have to make our script over-complicated with data transformation to meet guidelines for data visualization within Zabbix. We can send raw data, just like it is, and then use any suitable preprocessing step in the Zabbix frontend to extract the value that we need to visualize.
+
+![Alt Text](https://github.com/MagnoMonteCerqueira/ZABBIX---Open-Source-Monitoring-Software-for-Automotive-Monitoring/raw/main/Imgs/1641937602678.jpg)
+
+When data arrives in the Latest data in our Zabbix frontend, consider the most complicated part of this task is done. And just like before the idea of automotive monitoring with Zabbix, the only limitation is your imagination. You can simply collect this data without any actions. Monitor it on your own, from time to time just to see if you can do anything meaningful with it.
+You are also able to utilize a wide list of trigger functions within Zabbix to define that it is a problem when some particular value is received. For example when some DTC appeared on a device, or let's say the average speed of the vehicle exceeds a threshold. Maybe you want to set some borders for coordinates, and if a particular vehicle will get outside of a specified circle it could raise a problem in your monitoring system.
+It is up to you how to react to these triggers. It could be just a flashing light on your Problems view within the Zabbix frontend, it could also automatically create incidents for your maintenance team with a message that a particular vehicle has worn out brake pads that has to be replaced. But maybe if these brake pads are not replaced for a full week since the first time it was noticed, you want to receive a personalized message on your mobile phone so that you could escalate this issue further.
+No secret that there are flaws and downsides. As I mentioned right in beginning, there are software and devices that are developed and adopted exactly for this purpose, however, my approach may not be 100% reliable. Data transfer from ECU is not as live as reading CPU utilization from your computer. All of this is just a reminder, that monitoring is not limited to network devices and servers. And Zabbix, which is growing every year, provides more and more features to its users while remaining absolutely free and open-source, is here to support all your ideas and help them come to life.
+
+
+***Reference:
+
+
+
+✅ [dmitry lambert](https://www.linkedin.com/pulse/zabbix-open-source-monitoring-software-automotive-dmitry-lambert/)
+
+
+
+
 
 
 
